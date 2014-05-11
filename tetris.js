@@ -1,25 +1,10 @@
 $(document).ready(function() {
-    var w = tetris._w * tetris._g, h = (tetris._h - 2) * tetris._g, nw = 4 * tetris._g, nh = 10 * tetris._g;
+    var w = tetris.options.w * tetris.options.g, h = (tetris.options.h - 2) * tetris.options.g, nw = 4 * tetris.options.g, nh = 10 * tetris.options.g, k = tetris.options.keys();
     $('#playArea').width(w).height(h).prop({width: w, height: h});
     $('#nextArea').width(nw).height(nh).prop({width: nw, height: nh});
     $(document).keydown(function(e) {
-        switch (e.which) {
-            case 'S'.charCodeAt(0):
-            case 40:
-                tetris.move('d');
-                break;
-            case 'A'.charCodeAt(0):
-            case 37:
-                tetris.move('l');
-                break;
-            case 'D'.charCodeAt(0):
-            case 39:
-                tetris.move('r');
-                break;
-            case 'W'.charCodeAt(0):
-            case 38:
-                tetris.move('o');
-                break;
+        if (k.hasOwnProperty(e.which)) {
+            tetris.move(k[e.which]);
         }
     });
     $('#reset').click(function() {
@@ -47,26 +32,74 @@ $(document).ready(function() {
 });
 
 tetris = {
-    _w: 10,
-    _h: 22,
-    _g: 25,
+    options: {
+        // Keyboard configuration
+        // Returns: {int keycode: string movement, ...}
+        keys: function() {
+            var k = {};
+            k['S'.charCodeAt(0)] = 'd';
+            k['A'.charCodeAt(0)] = 'l'; 
+            k['D'.charCodeAt(0)] = 'r'; 
+            k['W'.charCodeAt(0)] = 'o'; 
+            k[40] = 'd';
+            k[37] = 'l';
+            k[39] = 'r';
+            k[38] = 'o';
+            return k;
+        },
+    
+        // Dimensions
+        w: 10,      // grid width, in squares
+        h: 22,      // grid height, in squares (including 2 hidden rows)
+        g: 25,      // grid square pixel size
 
-    // Tetrominos
-    _tetrominos: [
-        {name: 'I', color: '#00ffff', squares: [[0, 0], [-1, 0], [1, 0], [2, 0]]},
-        {name: 'J', color: '#0000ff', squares: [[0, 0], [-1, 0], [-1, -1], [1, 0]]},
-        {name: 'L', color: '#ffcc00', squares: [[0, 0], [-1, 0], [1, -1], [1, 0]]},
-        {name: 'O', color: '#ccff22', squares: [[0, 0], [0, -1], [1, -1], [1, 0]]},
-        {name: 'S', color: '#00ff22', squares: [[0, 0], [-1, 0], [0, -1], [1, -1]]},
-        {name: 'T', color: '#ff00ff', squares: [[0, 0], [-1, 0], [0, -1], [1, 0]]},
-        {name: 'Z', color: '#ff0000', squares: [[0, 0], [-1, -1], [0, -1], [1, 0]]}
-    ],
+        // Tetrominos
+        // Returns: {string name, string color, [[int xOffset, int yOffset], ...] squares}
+        tetrominos: [
+            {name: 'I', color: '#00ffff', squares: [[0, 0], [-1, 0], [1, 0], [2, 0]]},
+            {name: 'J', color: '#0000ff', squares: [[0, 0], [-1, 0], [-1, -1], [1, 0]]},
+            {name: 'L', color: '#ffcc00', squares: [[0, 0], [-1, 0], [1, -1], [1, 0]]},
+            {name: 'O', color: '#ccff22', squares: [[0, 0], [0, -1], [1, -1], [1, 0]]},
+            {name: 'S', color: '#00ff22', squares: [[0, 0], [-1, 0], [0, -1], [1, -1]]},
+            {name: 'T', color: '#ff00ff', squares: [[0, 0], [-1, 0], [0, -1], [1, 0]]},
+            {name: 'Z', color: '#ff0000', squares: [[0, 0], [-1, -1], [0, -1], [1, 0]]}
+        ],
+        
+        // Drop speed
+        // Values: int (lower = faster)
+        // Default: 5000
+        speed: 5000,
+        
+        // Level speed
+        // Values: int
+        // Default: 5
+        levelSpeed: 5,
+        
+        // Move modifiers
+        // Params:  int x, int y
+        // Returns: int x, int y, bool orientationChanged
+        movements: {
+            l: function(x, y) { return [x - 1, y, false ]; },
+            r: function(x, y) { return [x + 1, y, false ]; },
+            d: function(x, y) { return [x, y + 1, false ]; },
+            o: function(x, y) { return [-y, x, true]; }
+        },
+        
+        // Update score
+        // Params:  int score, int linesCleared, int level
+        // Returns: int newScore
+        updateScore: function(score, lines, level) {
+            multiplier = Math.pow(lines, 1.5) * (1 + (level * 0.1));
+            return score + parseInt(multiplier * 100);
+        }
+    },
+
     bag: [],
     nextPieces: [],
     fillBag: function() {
         var sorted = [], i;
         this.bag = [];
-        for (i = 0; i < this._tetrominos.length; i++) {
+        for (i = 0; i < this.options.tetrominos.length; i++) {
             sorted.push(i);
         }
         while (sorted.length > 0) {
@@ -75,15 +108,15 @@ tetris = {
     },
     popPiece: function() {
         var n, p, x, i;
-        this.nextPieces.push(this._tetrominos[this.bag.shift()]);
+        this.nextPieces.push(this.options.tetrominos[this.bag.shift()]);
         this.currentPiece = JSON.parse(JSON.stringify(this.nextPieces.shift()));
-        this.currentCentre = [parseInt((this._w / 2) - 0.5), 1];
-        this._nextCtx.clearRect(0, 0, 4 * this._g, 10 * this._g);
+        this.currentCentre = [parseInt((this.options.w / 2) - 0.5), 1];
+        this.nextCtx.clearRect(0, 0, 4 * this.options.g, 10 * this.options.g);
         for (x = 0; x < this.nextPieces.length; x++) {
             n = this.nextPieces[x];
             p = n.squares;
             for (i = 0; i < p.length; i++) {
-                this.drawSquare(this._nextCtx, p[i][0] + 1, (x * 3) + p[i][1] + 4, n.color);
+                this.drawSquare(this.nextCtx, p[i][0] + 1, (x * 3) + p[i][1] + 2, n.color);
             }
         }
         if (this.bag.length == 0) {
@@ -94,21 +127,15 @@ tetris = {
     // Movement
     occupied: [],
     occupiedColors: [],
-    _movements: {
-        l: function(x, y) { return [x - 1, y ]; },
-        r: function(x, y) { return [x + 1, y ]; },
-        d: function(x, y) { return [x, y + 1]; },
-        o: function(x, y) { return [-y, x]; }
-    },
     move: function(direction) {
-        var func = this._movements[direction], p = this.currentPiece.squares, c = this.currentCentre, valid = true, clear = false, tr = [], np = [], i, x, y;
+        var func = this.options.movements[direction], p = this.currentPiece.squares, c = this.currentCentre, valid = true, clear = false, tr = [], np = [], i, x, y;
         if (this.paused || !this.playing || !this.acceptingInput) {
             return;
         }
         for (i = 0; i < p.length; i++) {
             tr[i] = func(p[i][0], p[i][1]);
             np[i] = [c[0] + tr[i][0], c[1] + tr[i][1]];
-            if (np[i][0] < 0 || np[i][0] >= this._w || np[i][1] >= this._h || this.occupied[np[i][1]].indexOf(np[i][0]) > -1) {
+            if (np[i][0] < 0 || np[i][0] >= this.options.w || np[i][1] >= this.options.h || this.occupied[np[i][1]].indexOf(np[i][0]) > -1) {
                 valid = false;
             }
         }
@@ -119,7 +146,7 @@ tetris = {
                     y = c[1] + p[i][1];
                     this.occupied[y].push(x);
                     this.occupiedColors[y].push({x: x, color: this.currentPiece.color});
-                    if (this.occupied[y].length == this._w) {
+                    if (this.occupied[y].length == this.options.w) {
                         clear = true;
                     }
                 }
@@ -138,29 +165,29 @@ tetris = {
             return;
         }
         this.drawClearPiece();
-        if (direction == 'o') {
+        if (tr[0][2]) {
             this.currentPiece.squares = tr;
         }
         this.currentCentre = np[0];
         this.drawPiece();
     },
     clearLines: function() {
-        var newOccupied = [], newOccupiedColors = [], l = tetris._h - 1, i, inc, multiplier;
-        for (i = 0; i < tetris._h; i++) {
+        var newOccupied = [], newOccupiedColors = [], l = tetris.options.h - 1, i, lines, multiplier;
+        for (i = 0; i < tetris.options.h; i++) {
             newOccupied[i] = [];
             newOccupiedColors[i] = [];
         }
-        for (i = tetris._h - 1; i > 1; i--) {
-            if (tetris.occupied[i].length < tetris._w) {
+        for (i = tetris.options.h - 1; i > 1; i--) {
+            if (tetris.occupied[i].length < tetris.options.w) {
                 newOccupied[l] = tetris.occupied[i];
                 newOccupiedColors[l] = tetris.occupiedColors[i];
                 l--;
             }
         }
-        inc = l - i;
-        multiplier = Math.pow(inc, 1.5) * (1 + (parseInt(tetris.level) * 0.1));
-        tetris.score += parseInt(multiplier * 100);
-        tetris.level += inc * 0.25;
+        lines = l - i;
+        tetris.lines += lines;
+        tetris.score = tetris.options.updateScore(tetris.score, lines, tetris.level);
+        tetris.level = (tetris.lines / tetris.options.levelSpeed) + 1;
         tetris.occupied = newOccupied;
         tetris.occupiedColors = newOccupiedColors;
         tetris.acceptingInput = true;
@@ -180,17 +207,18 @@ tetris = {
         window.cancelAnimationFrame(this.timer);
         this.playing = false;
         this.score = 0;
+        this.lines = 0;
         this.level = 1;
-        this._ctx = document.getElementById('playArea').getContext('2d');
-        this._nextCtx = document.getElementById('nextArea').getContext('2d');
-        for (i = 0; i < this._h; i++) {
+        this.ctx = document.getElementById('playArea').getContext('2d');
+        this.nextCtx = document.getElementById('nextArea').getContext('2d');
+        for (i = 0; i < this.options.h; i++) {
             this.occupied[i] = [];
             this.occupiedColors[i] = [];
         }
         this.redraw();
         this.fillBag();
         for (i = 0; i < 3; i++) {
-            this.nextPieces.push(this._tetrominos[this.bag.shift()]);
+            this.nextPieces.push(this.options.tetrominos[this.bag.shift()]);
         }
         this.popPiece();
         this.ready = true;
@@ -207,7 +235,7 @@ tetris = {
         this.redraw();
     },
     tick: function(now) {
-        var tick = parseInt(now / (5000 / (parseInt(tetris.level) + 3)));
+        var tick = parseInt(now / (tetris.options.speed / (parseInt(tetris.level) + 3)));
         if (tick > tetris.lastTick) {
             tetris.move('d');
         }
@@ -219,36 +247,37 @@ tetris = {
     drawClearPiece: function() {
         var p = this.currentPiece.squares, c = this.currentCentre, i;
         for (i = 0; i < p.length; i++) {
-            this.drawClearSquare(this._ctx, c[0] + p[i][0], c[1] + p[i][1]);
+            this.drawClearSquare(this.ctx, c[0] + p[i][0], c[1] + p[i][1]);
         }
     },
     drawPiece: function() {
         var color = this.currentPiece.color, p = this.currentPiece.squares, c = this.currentCentre, i;
         for (i = 0; i < p.length; i++) {
-            this.drawSquare(this._ctx, c[0] + p[i][0], c[1] + p[i][1], color);
+            this.drawSquare(this.ctx, c[0] + p[i][0], c[1] + p[i][1] - 2, color);
         }
     },
     drawClearSquare: function(ctx, x, y) {
-        ctx.clearRect(x * this._g, (y - 2) * this._g, this._g, this._g);
+        ctx.clearRect(x * this.options.g, (y - 2) * this.options.g, this.options.g, this.options.g);
     },
     drawSquare: function(ctx, x, y, color) {
         ctx.globalAlpha = 0.8;
         ctx.fillStyle = color;
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.lineWidth = 1;
-        ctx.fillRect(x * this._g + 1, (y - 2) * this._g + 1, this._g - 2, this._g - 2);
-        ctx.strokeRect(x * this._g + 1, (y - 2) * this._g + 1, this._g - 2, this._g - 2);
+        ctx.fillRect(x * this.options.g + 1, y * this.options.g + 1, this.options.g - 2, this.options.g - 2);
+        ctx.strokeRect(x * this.options.g + 1, y * this.options.g + 1, this.options.g - 2, this.options.g - 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(x * this._g + 3, (y - 2) * this._g + 3, 5, 5);
+        ctx.fillRect(x * this.options.g + 3, y * this.options.g + 3, 5, 5);
     },
     redraw: function() {
-        this._ctx.clearRect(0, 0, this._w * this._g, this._h * this._g);
+        this.ctx.clearRect(0, 0, this.options.w * this.options.g, this.options.h * this.options.g);
         $(this.occupiedColors).each(function(i, e) {
             $(e).each(function(j, f) {
-                tetris.drawSquare(tetris._ctx, f.x, i, tetris.playing? (e.length == tetris._w? '#ffe87c': f.color): '#aaa');
+                tetris.drawSquare(tetris.ctx, f.x, i - 2, tetris.playing? (e.length == tetris.options.w? '#ffe87c': f.color): '#aaa');
             });
         });
         $('#level').text(parseInt(this.level));
         $('#score').text(this.score);
+        $('#lines').text(this.lines);
     }
 }
