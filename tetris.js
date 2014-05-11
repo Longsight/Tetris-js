@@ -158,7 +158,7 @@ tetris = {
             }
         }
         var inc = l - i;
-        var multiplier = Math.pow(inc, 1.5) * (1 + (this.level * 0.1));
+        var multiplier = Math.pow(inc, 1.5) * (1 + (parseInt(this.level) * 0.1));
         this.score += parseInt(multiplier * 100);
         this.level += inc * 0.25;
         this.occupied = newOccupied;
