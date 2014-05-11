@@ -14,7 +14,7 @@ $(document).ready(function() {
     $('#pause').click(function() {
         tetris.togglePause();
     });
-    tetris.reset();
+    tetris.start();
 });
 
 tetris = {
@@ -23,7 +23,7 @@ tetris = {
         // Returns: {int keycode: {string name, function() action}, ...}
         keys: function() {
             var k = {};
-            k[' '.charCodeAt(0)] = {name: 'Start', action: function() { tetris.start(); }};
+            k['R'.charCodeAt(0)] = {name: 'Start', action: function() { tetris.start(); }};
             k['P'.charCodeAt(0)] = {name: 'Pause', action: function() { tetris.togglePause(); }};
             k['S'.charCodeAt(0)] = {name: 'Move down', action: function() { tetris.move('d'); }};
             k['A'.charCodeAt(0)] = {name: 'Move left', action: function() { tetris.move('l'); }};
@@ -77,6 +77,11 @@ tetris = {
         // Values: int
         // Default: 5
         levelSpeed: 5,
+        
+        // Automatically start after resetting?
+        // Values: bool
+        // Default: true
+        autostart: true,
         
         // Move modifiers
         // Params:  int x, int y
@@ -238,7 +243,9 @@ tetris = {
     start: function() {
         if (tetris.playing || !tetris.ready) {
             tetris.reset();
-            return;
+            if (!tetris.options.autostart) {
+                return;
+            }
         }
         this.timer = window.requestAnimationFrame(tetris.tick);
         $('#start').text('RESET');
