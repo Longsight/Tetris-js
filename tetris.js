@@ -4,29 +4,19 @@ $(document).ready(function() {
     $('#nextArea').width(nw).height(nh).prop({width: nw, height: nh});
     $(document).keydown(function(e) {
         if (k.hasOwnProperty(e.which)) {
-            tetris.move(k[e.which]);
+            k[e.which].action();
         }
     });
-    $('#reset').click(function() {
+    $('#start').click(function() {
         if (!tetris.playing && tetris.ready) {
-            $(this).text('RESET');
             tetris.start();
         }
         else {
-            $(this).text('START');
             tetris.reset();
         }
     });
     $('#pause').click(function() {
-        tetris.paused = !tetris.paused;
-        if (tetris.paused) {
-            $(this).text('PAUSED');
-            $(this).addClass('paused');
-        }
-        else {
-            $(this).text('PAUSE');
-            $(this).removeClass('paused');
-        }
+        tetris.togglePause();
     });
     tetris.reset();
 });
@@ -34,17 +24,19 @@ $(document).ready(function() {
 tetris = {
     options: {
         // Keyboard configuration
-        // Returns: {int keycode: string movement, ...}
+        // Returns: {int keycode: {string name, function() action}, ...}
         keys: function() {
             var k = {};
-            k['S'.charCodeAt(0)] = 'd';
-            k['A'.charCodeAt(0)] = 'l'; 
-            k['D'.charCodeAt(0)] = 'r'; 
-            k['W'.charCodeAt(0)] = 'o'; 
-            k[40] = 'd';
-            k[37] = 'l';
-            k[39] = 'r';
-            k[38] = 'o';
+            k[' '.charCodeAt(0)] = {name: 'Start', action: function() { tetris.start(); }};
+            k['P'.charCodeAt(0)] = {name: 'Pause', action: function() { tetris.togglePause(); }};
+            k['S'.charCodeAt(0)] = {name: 'Move down', action: function() { tetris.move('d'); }};
+            k['A'.charCodeAt(0)] = {name: 'Move left', action: function() { tetris.move('l'); }};
+            k['D'.charCodeAt(0)] = {name: 'Move right', action: function() { tetris.move('r'); }};
+            k['W'.charCodeAt(0)] = {name: 'Rotate', action: function() { tetris.move('o'); }};
+            k[40] = k['S'.charCodeAt(0)];
+            k[37] = k['A'.charCodeAt(0)];
+            k[39] = k['D'.charCodeAt(0)];
+            k[38] = k['W'.charCodeAt(0)];
             return k;
         },
     
@@ -221,12 +213,26 @@ tetris = {
             this.nextPieces.push(this.options.tetrominos[this.bag.shift()]);
         }
         this.popPiece();
+        $('#start').text('START');
         this.ready = true;
     },
     start: function() {
         this.timer = window.requestAnimationFrame(tetris.tick);
+        $('#start').text('RESET');
         this.playing = true;
         this.acceptingInput = true;
+    },
+    togglePause: function () {
+        var b = $('#pause');
+        this.paused = !this.paused;
+        if (this.paused) {
+            b.text('PAUSED');
+            b.addClass('paused');
+        }
+        else {
+            b.text('PAUSE');
+            b.removeClass('paused');
+        }
     },
     gameOver: function() {
         window.cancelAnimationFrame(this.timer);
