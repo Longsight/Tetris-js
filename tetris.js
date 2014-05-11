@@ -258,7 +258,7 @@ tetris = {
         this._ctx.clearRect(0, 0, this._w * this._g, this._h * this._g);
         $(this.occupiedColors).each(function(i, e) {
             $(e).each(function(j, f) {
-                tetris.drawSquare(tetris._ctx, f.x, i, tetris.playing? (e.length == tetris._w? '#eee': f.color): '#aaa');
+                tetris.drawSquare(tetris._ctx, f.x, i, tetris.playing? (e.length == tetris._w? '#eec': f.color): '#aaa');
             });
         });
         $('#level').text(parseInt(this.level));
