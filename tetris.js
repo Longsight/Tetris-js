@@ -57,12 +57,22 @@ tetris = {
             {name: 'Z', color: '#ff0000', squares: [[0, 0], [-1, -1], [0, -1], [1, 0]]}
         ],
         
+        // Line highlight color
+        // Values: string color
+        // Default: '#ffe87c'
+        highlightColor: '#ffe87c',
+        
+        // Line highlight time (ms)
+        // Values: int
+        // Default: 200
+        highlightTime: 200,
+        
         // Drop speed
         // Values: int (lower = faster)
         // Default: 5000
         speed: 5000,
         
-        // Level speed
+        // Level speed (lines per level increase)
         // Values: int
         // Default: 5
         levelSpeed: 5,
@@ -145,7 +155,12 @@ tetris = {
                 if (clear) {
                     this.redraw();
                     this.acceptingInput = false;
-                    window.setTimeout(function() { window.requestAnimationFrame(tetris.clearLines); }, 200);
+                    if (this.options.highlightTime > 0) {
+                        window.setTimeout(function() { window.requestAnimationFrame(tetris.clearLines); }, this.options.highlightTime);
+                    }
+                    else {
+                        this.clearLines();
+                    }
                 }
                 else {
                     if (this.occupied[2].length > 0) {
@@ -224,8 +239,7 @@ tetris = {
     },
     togglePause: function () {
         var b = $('#pause');
-        this.paused = !this.paused;
-        if (this.paused) {
+        if (this.paused = !this.paused) {
             b.text('PAUSED');
             b.addClass('paused');
         }
@@ -279,7 +293,7 @@ tetris = {
         this.ctx.clearRect(0, 0, this.options.w * this.options.g, this.options.h * this.options.g);
         $(this.occupiedColors).each(function(i, e) {
             $(e).each(function(j, f) {
-                tetris.drawSquare(tetris.ctx, f.x, i - 2, tetris.playing? (e.length == tetris.options.w? '#ffe87c': f.color): '#aaa');
+                tetris.drawSquare(tetris.ctx, f.x, i - 2, tetris.playing? (e.length == tetris.options.w? tetris.options.highlightColor: f.color): '#aaa');
             });
         });
         $('#level').text(parseInt(this.level));
