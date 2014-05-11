@@ -26,7 +26,14 @@ $(document).ready(function() {
         }
     });
     $('#reset').click(function() {
-        tetris.start();
+        if (!tetris.playing && tetris.ready) {
+            $(this).text('RESET');
+            tetris.start();
+        }
+        else {
+            $(this).text('START');
+            tetris.reset();
+        }
     });
     $('#pause').click(function() {
         tetris.paused = !tetris.paused;
@@ -39,7 +46,7 @@ $(document).ready(function() {
             $(this).removeClass('paused');
         }
     });
-    tetris.start();
+    tetris.reset();
 });
 
 tetris = {
@@ -97,7 +104,7 @@ tetris = {
         o: function(x, y) { return [-y, x]; }
     },
     move: function(direction) {
-        if (this.paused) {
+        if (this.paused || !this.playing || !this.acceptingInput) {
             return;
         }
         var func = this._movements[direction];
@@ -126,12 +133,16 @@ tetris = {
                     }
                 }
                 if (clear) {
-                    this.clearLines();
+                    this.redraw();
+                    this.acceptingInput = false;
+                    window.setTimeout(function() { window.requestAnimationFrame(tetris.clearLines); }, 200);
                 }
-                if (this.occupied[2].length > 0) {
-                    this.gameOver();
+                else {
+                    if (this.occupied[2].length > 0) {
+                        this.gameOver();
+                    }
+                    this.popPiece();
                 }
-                this.popPiece();
             }
             return;
         }
@@ -145,31 +156,39 @@ tetris = {
     clearLines: function() {
         var newOccupied = [];
         var newOccupiedColors = [];
-        for (var i = 0; i < this._h; i++) {
+        var l = tetris._h - 1;
+        for (var i = 0; i < tetris._h; i++) {
             newOccupied[i] = [];
             newOccupiedColors[i] = [];
         }
-        var l = this._h - 1;
-        for (i = this._h - 1; i > 1; i--) {
-            if (this.occupied[i].length < this._w) {
-                newOccupied[l] = this.occupied[i];
-                newOccupiedColors[l] = this.occupiedColors[i];
+        for (i = tetris._h - 1; i > 1; i--) {
+            if (tetris.occupied[i].length < tetris._w) {
+                newOccupied[l] = tetris.occupied[i];
+                newOccupiedColors[l] = tetris.occupiedColors[i];
                 l--;
             }
         }
         var inc = l - i;
-        var multiplier = Math.pow(inc, 1.5) * (1 + (parseInt(this.level) * 0.1));
-        this.score += parseInt(multiplier * 100);
-        this.level += inc * 0.25;
-        this.occupied = newOccupied;
-        this.occupiedColors = newOccupiedColors;
-        this.redraw();
+        var multiplier = Math.pow(inc, 1.5) * (1 + (parseInt(tetris.level) * 0.1));
+        tetris.score += parseInt(multiplier * 100);
+        tetris.level += inc * 0.25;
+        tetris.occupied = newOccupied;
+        tetris.occupiedColors = newOccupiedColors;
+        tetris.acceptingInput = true;
+        if (tetris.occupied[2].length > 0) {
+            tetris.gameOver();
+        }
+        tetris.redraw();
+        tetris.popPiece();
     },
 
     // Gameplay
-    paused: false,
     lastTick: 0,
-    start: function() {
+    ready: false,
+    acceptingInput: false,
+    reset: function() {
+        window.cancelAnimationFrame(this.timer);
+        this.playing = false;
         this.score = 0;
         this.level = 1;
         this._ctx = document.getElementById('playArea').getContext('2d');
@@ -184,11 +203,18 @@ tetris = {
             this.nextPieces.push(this._tetrominos[this.bag.shift()]);
         }
         this.popPiece();
+        this.ready = true;
+    },
+    start: function() {
         this.timer = window.requestAnimationFrame(tetris.tick);
+        this.playing = true;
+        this.acceptingInput = true;
     },
     gameOver: function() {
-        window.cancelAnimationFrame(this.tick);
-        this.start();
+        window.cancelAnimationFrame(this.timer);
+        this.playing = false;
+        this.ready = false;
+        this.redraw();
     },
     tick: function(now) {
         var tick = parseInt(now / (5000 / (parseInt(tetris.level) + 3)));
@@ -219,19 +245,20 @@ tetris = {
         ctx.clearRect(x * this._g, (y - 2) * this._g, this._g, this._g);
     },
     drawSquare: function(ctx, x, y, color) {
+        ctx.globalAlpha = 0.8;
         ctx.fillStyle = color;
-        ctx.StrokeStyle = color;
-        ctx.StrokeWidth = 1;
-        ctx.globalAlpha = 0.4;
-        ctx.fillRect(x * this._g, (y - 2) * this._g, this._g, this._g);
-        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.fillRect(x * this._g + 1, (y - 2) * this._g + 1, this._g - 2, this._g - 2);
         ctx.strokeRect(x * this._g + 1, (y - 2) * this._g + 1, this._g - 2, this._g - 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(x * this._g + 3, (y - 2) * this._g + 3, 5, 5);
     },
     redraw: function() {
         this._ctx.clearRect(0, 0, this._w * this._g, this._h * this._g);
         $(this.occupiedColors).each(function(i, e) {
             $(e).each(function(j, f) {
-                tetris.drawSquare(tetris._ctx, f.x, i, f.color);
+                tetris.drawSquare(tetris._ctx, f.x, i, tetris.playing? (e.length == tetris._w? '#eee': f.color): '#aaa');
             });
         });
         $('#level').text(parseInt(this.level));
