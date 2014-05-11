@@ -1,8 +1,5 @@
 $(document).ready(function() {
-    var w = tetris._w * tetris._g;
-    var h = (tetris._h - 2) * tetris._g;
-    var nw = 4 * tetris._g;
-    var nh = 10 * tetris._g;
+    var w = tetris._w * tetris._g, h = (tetris._h - 2) * tetris._g, nw = 4 * tetris._g, nh = 10 * tetris._g;
     $('#playArea').width(w).height(h).prop({width: w, height: h});
     $('#nextArea').width(nw).height(nh).prop({width: nw, height: nh});
     $(document).keydown(function(e) {
@@ -67,9 +64,9 @@ tetris = {
     bag: [],
     nextPieces: [],
     fillBag: function() {
-        var sorted = [];
+        var sorted = [], i;
         this.bag = [];
-        for (var i = 0; i < this._tetrominos.length; i++) {
+        for (i = 0; i < this._tetrominos.length; i++) {
             sorted.push(i);
         }
         while (sorted.length > 0) {
@@ -77,15 +74,15 @@ tetris = {
         }
     },
     popPiece: function() {
+        var n, p, x, i;
         this.nextPieces.push(this._tetrominos[this.bag.shift()]);
         this.currentPiece = JSON.parse(JSON.stringify(this.nextPieces.shift()));
         this.currentCentre = [parseInt((this._w / 2) - 0.5), 1];
         this._nextCtx.clearRect(0, 0, 4 * this._g, 10 * this._g);
-        var n, p;
-        for (var x = 0; x < this.nextPieces.length; x++) {
+        for (x = 0; x < this.nextPieces.length; x++) {
             n = this.nextPieces[x];
             p = n.squares;
-            for (var i = 0; i < p.length; i++) {
+            for (i = 0; i < p.length; i++) {
                 this.drawSquare(this._nextCtx, p[i][0] + 1, (x * 3) + p[i][1] + 4, n.color);
             }
         }
@@ -104,17 +101,11 @@ tetris = {
         o: function(x, y) { return [-y, x]; }
     },
     move: function(direction) {
+        var func = this._movements[direction], p = this.currentPiece.squares, c = this.currentCentre, valid = true, clear = false, tr = [], np = [], i, x, y;
         if (this.paused || !this.playing || !this.acceptingInput) {
             return;
         }
-        var func = this._movements[direction];
-        var p = this.currentPiece.squares;
-        var c = this.currentCentre;
-        var valid = true;
-        var clear = false;
-        var tr = [];
-        var np = [];
-        for (var i = 0; i < p.length; i++) {
+        for (i = 0; i < p.length; i++) {
             tr[i] = func(p[i][0], p[i][1]);
             np[i] = [c[0] + tr[i][0], c[1] + tr[i][1]];
             if (np[i][0] < 0 || np[i][0] >= this._w || np[i][1] >= this._h || this.occupied[np[i][1]].indexOf(np[i][0]) > -1) {
@@ -123,9 +114,9 @@ tetris = {
         }
         if (!valid) {
             if (direction == 'd') {
-                for (var i = 0; i < p.length; i++) {
-                    var x = c[0] + p[i][0];
-                    var y = c[1] + p[i][1];
+                for (i = 0; i < p.length; i++) {
+                    x = c[0] + p[i][0];
+                    y = c[1] + p[i][1];
                     this.occupied[y].push(x);
                     this.occupiedColors[y].push({x: x, color: this.currentPiece.color});
                     if (this.occupied[y].length == this._w) {
@@ -154,10 +145,8 @@ tetris = {
         this.drawPiece();
     },
     clearLines: function() {
-        var newOccupied = [];
-        var newOccupiedColors = [];
-        var l = tetris._h - 1;
-        for (var i = 0; i < tetris._h; i++) {
+        var newOccupied = [], newOccupiedColors = [], l = tetris._h - 1, i, inc, multiplier;
+        for (i = 0; i < tetris._h; i++) {
             newOccupied[i] = [];
             newOccupiedColors[i] = [];
         }
@@ -168,8 +157,8 @@ tetris = {
                 l--;
             }
         }
-        var inc = l - i;
-        var multiplier = Math.pow(inc, 1.5) * (1 + (parseInt(tetris.level) * 0.1));
+        inc = l - i;
+        multiplier = Math.pow(inc, 1.5) * (1 + (parseInt(tetris.level) * 0.1));
         tetris.score += parseInt(multiplier * 100);
         tetris.level += inc * 0.25;
         tetris.occupied = newOccupied;
@@ -187,13 +176,14 @@ tetris = {
     ready: false,
     acceptingInput: false,
     reset: function() {
+        var i;
         window.cancelAnimationFrame(this.timer);
         this.playing = false;
         this.score = 0;
         this.level = 1;
         this._ctx = document.getElementById('playArea').getContext('2d');
         this._nextCtx = document.getElementById('nextArea').getContext('2d');
-        for (var i = 0; i < this._h; i++) {
+        for (i = 0; i < this._h; i++) {
             this.occupied[i] = [];
             this.occupiedColors[i] = [];
         }
@@ -227,17 +217,14 @@ tetris = {
     
     // Drawing
     drawClearPiece: function() {
-        var p = this.currentPiece.squares;
-        var c = this.currentCentre;
-        for (var i = 0; i < p.length; i++) {
+        var p = this.currentPiece.squares, c = this.currentCentre, i;
+        for (i = 0; i < p.length; i++) {
             this.drawClearSquare(this._ctx, c[0] + p[i][0], c[1] + p[i][1]);
         }
     },
     drawPiece: function() {
-        var color = this.currentPiece.color;
-        var p = this.currentPiece.squares;
-        var c = this.currentCentre;
-        for (var i = 0; i < p.length; i++) {
+        var color = this.currentPiece.color, p = this.currentPiece.squares, c = this.currentCentre, i;
+        for (i = 0; i < p.length; i++) {
             this.drawSquare(this._ctx, c[0] + p[i][0], c[1] + p[i][1], color);
         }
     },
