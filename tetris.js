@@ -90,7 +90,6 @@ tetris = {
     // Movement
     occupied: [],
     occupiedColors: [],
-    clear: false,
     _movements: {
         l: function(x, y) { return [x - 1, y ]; },
         r: function(x, y) { return [x + 1, y ]; },
@@ -105,6 +104,7 @@ tetris = {
         var p = this.currentPiece.squares;
         var c = this.currentCentre;
         var valid = true;
+        var clear = false;
         var tr = [];
         var np = [];
         for (var i = 0; i < p.length; i++) {
@@ -122,10 +122,10 @@ tetris = {
                     this.occupied[y].push(x);
                     this.occupiedColors[y].push({x: x, color: this.currentPiece.color});
                     if (this.occupied[y].length == this._w) {
-                        this.clear = true;
+                        clear = true;
                     }
                 }
-                if (this.clear) {
+                if (clear) {
                     this.clearLines();
                 }
                 if (this.occupied[2].length > 0) {
@@ -164,7 +164,6 @@ tetris = {
         this.occupied = newOccupied;
         this.occupiedColors = newOccupiedColors;
         this.redraw();
-        this.clear = false;
     },
 
     // Gameplay
