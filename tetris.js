@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var w = tetris.options.w * tetris.options.g, h = (tetris.options.h - 2) * tetris.options.g, nw = 4 * tetris.options.g, nh = 10 * tetris.options.g, k = tetris.options.keys();
+    var w = tetris.options.w * tetris.options.g, h = (tetris.options.h - 2) * tetris.options.g, nw = 4 * tetris.options.g, nh = ((3 * tetris.options.showNext) + 1) * tetris.options.g, k = tetris.options.keys();
     $('#playArea').width(w).height(h).prop({width: w, height: h});
     $('#nextArea').width(nw).height(nh).prop({width: nw, height: nh});
     $(document).keydown(function(e) {
