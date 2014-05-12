@@ -37,6 +37,7 @@ tetris = {
         },
     
         // Dimensions
+        // Values:  int
         w: 10,      // grid width, in squares
         h: 22,      // grid height, in squares (including 2 hidden rows)
         g: 25,      // grid square pixel size
@@ -54,38 +55,43 @@ tetris = {
         ],
         
         // Line highlight color
-        // Values: string color
+        // Values:  string color
         // Default: '#ffe87c'
         highlightColor: '#ffe87c',
         
         // Game over fill color
-        // Values: string color
+        // Values:  string color
         // Default: '#aaaaaa'
         gameOverColor: '#aaaaaa',
         
         // Line highlight time (ms)
-        // Values: int
+        // Values:  int
         // Default: 200
         highlightTime: 200,
         
         // Drop speed
-        // Values: int (lower = faster)
+        // Values:  int (lower = faster)
         // Default: 5000
         speed: 5000,
         
         // Level speed (lines per level increase)
-        // Values: int
+        // Values:  int
         // Default: 5
         levelSpeed: 5,
         
+        // Next pieces to show
+        // Values:  int (minimum 1)
+        // Default: 3
+        showNext: 3,
+        
         // Automatically start after resetting?
-        // Values: bool
+        // Values:  bool
         // Default: true
         autostart: true,
         
         // Move modifiers
         // Params:  int x, int y
-        // Returns: int x, int y, bool orientationChanged
+        // Returns: [int x, int y, bool orientationChanged]
         movements: {
             l: function(x, y) { return [x - 1, y, false ]; },
             r: function(x, y) { return [x + 1, y, false ]; },
@@ -102,8 +108,6 @@ tetris = {
         }
     },
 
-    bag: [],
-    nextPieces: [],
     fillBag: function() {
         var sorted = [], i;
         this.bag = [];
@@ -120,7 +124,7 @@ tetris = {
         this.currentPiece = JSON.parse(JSON.stringify(this.nextPieces.shift()));
         this.currentCentre = [parseInt((this.options.w / 2) - 0.5), 2];
         this.drawPiece();
-        this.nextCtx.clearRect(0, 0, 4 * this.options.g, 10 * this.options.g);
+        this.nextCtx.clearRect(0, 0, 4 * this.options.g, ((3 * this.options.showNext) + 1) * this.options.g);
         for (x = 0; x < this.nextPieces.length; x++) {
             n = this.nextPieces[x];
             p = n.squares;
@@ -233,7 +237,8 @@ tetris = {
         }
         this.redraw();
         this.fillBag();
-        for (i = 0; i < 3; i++) {
+        this.nextPieces = [];
+        for (i = 0; i < this.options.showNext; i++) {
             this.nextPieces.push(this.options.tetrominos[this.bag.shift()]);
         }
         this.popPiece();
