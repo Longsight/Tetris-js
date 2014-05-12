@@ -221,7 +221,7 @@ tetris = {
     // Gameplay
     lastTick: 0,
     ready: false,
-    acceptingInput: false,
+    playing: false,
     reset: function() {
         var i;
         window.cancelAnimationFrame(this.timer);
