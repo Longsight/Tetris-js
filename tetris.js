@@ -206,7 +206,7 @@ tetris = {
         lines = l - i;
         tetris.lines += lines;
         tetris.score = tetris.options.updateScore(tetris.score, lines, tetris.level);
-        tetris.level = (tetris.lines / tetris.options.levelSpeed) + 1;
+        tetris.level = parseInt(tetris.lines / tetris.options.levelSpeed) + 1;
         tetris.occupied = newOccupied;
         tetris.occupiedColors = newOccupiedColors;
         tetris.acceptingInput = true;
@@ -316,7 +316,7 @@ tetris = {
                 tetris.drawSquare(tetris.ctx, f.x, i - 2, tetris.playing? (e.length == tetris.options.w? tetris.options.highlightColor: f.color): tetris.options.gameOverColor);
             });
         });
-        $('#level').text(parseInt(this.level));
+        $('#level').text(this.level);
         $('#score').text(this.score);
         $('#lines').text(this.lines);
     }
